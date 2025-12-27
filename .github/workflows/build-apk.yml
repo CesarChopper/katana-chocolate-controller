@@ -1,10 +1,9 @@
-
 name: Build Debug APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -24,24 +23,31 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android platforms/build-tools
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0"
+
+      - name: Show repo files (debug)
+        run: ls -la
 
       - name: Unzip project
         run: |
           ZIP="$(ls *.zip | head -n 1)"
           echo "Using ZIP: $ZIP"
           unzip -q "$ZIP"
+          ls -la
 
       - name: Build debug APK
         run: |
           cd KatanaChocolateController
           chmod +x ./gradlew
-          ./gradlew assembleDebug
+          ./gradlew --no-daemon assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: KatanaChocolateController/app/build/outputs/apk/debug/*.apk
+          name: KatanaChocolateController-debug-apk
+          path: KatanaChocolateController/app/build/outputs/apk/debug/app-debug.apk
