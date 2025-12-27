@@ -1,1 +1,47 @@
 
+name: Build Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platforms/build-tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Unzip project
+        run: |
+          ZIP="$(ls *.zip | head -n 1)"
+          echo "Using ZIP: $ZIP"
+          unzip -q "$ZIP"
+
+      - name: Build debug APK
+        run: |
+          cd KatanaChocolateController
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: KatanaChocolateController/app/build/outputs/apk/debug/*.apk
